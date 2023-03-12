@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "VehiclePhotographySpike (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "VehiclePhotographySpike (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
