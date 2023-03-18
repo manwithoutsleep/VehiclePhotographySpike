@@ -19,6 +19,7 @@ using Microsoft.UI.Composition.SystemBackdrops;
 using VehiclePhotographySpike.WebUI.Helpers;
 using System.Runtime.Intrinsics.X86;
 using Windows.System;
+using System.Linq;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -30,11 +31,18 @@ namespace VehiclePhotographySpike.WebUI
     /// </summary>
     public sealed partial class MainWindow : Window
     {
-
         private AppWindow m_AppWindow;
         WindowsSystemDispatcherQueueHelper m_wsdqHelper; // See below for implementation.
         MicaController m_backdropController;
         SystemBackdropConfiguration m_configurationSource;
+
+        private const string VehicleFolderNamePattern = "{VIN}_YYYY-MM-DD_hh-mm-ss";
+        private const string VehicleFolderNameRegEx = "^\\w{17}_\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2}";
+        private const string VehiclePicturesFolderName = "ADCVehiclePictures";
+        private readonly IEnumerable<string> FileTypeFilter = new List<string>
+        {
+            "JPG"
+        };
 
         public MainWindow()
         {
@@ -53,34 +61,19 @@ namespace VehiclePhotographySpike.WebUI
 
         private async Task GetItemsAsync()
         {
-            // See the Remarks section of the KnownFolders.DocumentsLibrary Property page:
-            // https://learn.microsoft.com/en-us/uwp/api/windows.storage.knownfolders.documentslibrary?view=winrt-22621#remarks
-            // In particular:
-            // If your app has to create and update files that only your app uses,
-            // consider using the app's LocalCache folder. For more information on
-            // which folders you should use for your app's data, see ApplicationData
-            // class.
-            // 
-            // Alternatively, let the user select the file location by using a file
-            // picker.For more info, see Open files and folders with a picker and in
-            // particular the SuggestedStartLocation property which can be set to
-            // DocumentsLibrary. If the user selects the Documents Library from within
-            // the picker, you do not need to use this property nor do you need the
-            // documentsLibrary capability.
+            var userPictureLibrary = KnownFolders.PicturesLibrary;
 
+            var vehiclePicturesRootFolder = await userPictureLibrary.CreateFolderAsync(VehiclePicturesFolderName, CreationCollisionOption.OpenIfExists);
 
-            var userProfileFolderName = KnownFolders.PicturesLibrary;
-            StorageFolder folder = userProfileFolderName;
-
-
-            //StorageFolder appInstalledFolder = Package.Current.InstalledLocation;
-            //StorageFolder picturesFolder = await appInstalledFolder.GetFolderAsync("Assets\\Samples");
-
-            var result = picturesFolder.CreateFileQueryWithOptions(new QueryOptions());
-            IReadOnlyList<StorageFile> imageFiles = await result.GetFilesAsync();
-            foreach (StorageFile file in imageFiles)
+            foreach(var vehicleFolder in await vehiclePicturesRootFolder.GetFoldersAsync())
             {
-                Images.Add(await LoadImageInfo(file));
+                var queryResult = vehicleFolder.CreateFileQueryWithOptions(new QueryOptions(CommonFileQuery.OrderByTitle, FileTypeFilter));
+                var vehicleImageFiles = await queryResult.GetFilesAsync();
+                var vehicleImage = vehicleImageFiles.FirstOrDefault();
+                if (vehicleImage != null)
+                {
+                    Images.Add(await LoadImageInfo(vehicleImage));
+                }
             }
         }
 
