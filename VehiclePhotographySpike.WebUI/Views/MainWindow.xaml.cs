@@ -6,8 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using VehiclePhotographySpike.WebUI.Models;
-using Windows.ApplicationModel;
+using VehiclePhotographySpike.ViewModels.Models;
 using Windows.Storage.Search;
 using Windows.Storage;
 using Microsoft.UI.Xaml.Controls;
@@ -17,8 +16,6 @@ using WinRT;
 using WinRT.Interop;
 using Microsoft.UI.Composition.SystemBackdrops;
 using VehiclePhotographySpike.WebUI.Helpers;
-using System.Runtime.Intrinsics.X86;
-using Windows.System;
 using System.Linq;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -47,7 +44,14 @@ namespace VehiclePhotographySpike.WebUI
         public MainWindow()
         {
             this.InitializeComponent();
-            GetItemsAsync();
+
+            // TODO: This won't work, async never returns
+            GetItemsAsync().ContinueWith(task =>
+            {
+                // do whatever you need to                
+            }, TaskScheduler.FromCurrentSynchronizationContext());
+
+            
 
             var isMica = TrySetSystemBackdrop();
 
@@ -155,7 +159,7 @@ namespace VehiclePhotographySpike.WebUI
 
         bool TrySetSystemBackdrop()
         {
-            if (Microsoft.UI.Composition.SystemBackdrops.MicaController.IsSupported())
+            if (MicaController.IsSupported())
             {
                 m_wsdqHelper = new WindowsSystemDispatcherQueueHelper();
                 m_wsdqHelper.EnsureWindowsSystemDispatcherQueueController();
